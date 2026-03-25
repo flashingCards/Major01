@@ -1,0 +1,46 @@
+{
+  "dataset": {
+    "days": 59,
+    "hourly_rows": 265,
+    "downtime_events": 1388,
+    "total_liters": 212358.0,
+    "total_units": 60888,
+    "total_monitored_hours": 238.65463694444426,
+    "total_operation_hours": 101.8089752777777,
+    "total_pause_hours": 137.56440277777767,
+    "overall_efficiency": 0.4265954208192382,
+    "mean_daily_efficiency": 0.46520808832038557
+  },
+  "downtime_profile": {
+    "median_min": 1.5005333333333333,
+    "p90_min": 6.500543333333334,
+    "p95_min": 13.73810583333323,
+    "max_min": 349.8316833333334,
+    "micro_count": 851,
+    "micro_share_time_pct": 13.589252007543287,
+    "minor_count": 443,
+    "minor_share_time_pct": 20.151090023448457,
+    "major_count": 94,
+    "major_share_time_pct": 66.25965796900826
+  },
+  "scenarios": {
+    "baseline_liters": 211924.69216319927,
+    "visual_liters_gain_pct": 2.3319586908315304,
+    "tpm_liters_gain_pct": 20.610813667202855,
+    "integrated_liters_gain_pct": 32.18951434892546,
+    "baseline_efficiency_pct": 42.36923408651354,
+    "integrated_efficiency_pct": 55.328620373766455,
+    "integrated_eff_gain_pp": 12.959386287252917,
+    "integrated_pause_reduction_pct": 22.509097218558246
+  },
+  "product_rates_lph": {
+    "3": {
+      "mean": 1963.707,
+      "median": 1858.908
+    },
+    "5": {
+      "mean": 2918.68,
+      "median": 2729.257
+    }
+  }
+}
