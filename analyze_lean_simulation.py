@@ -203,6 +203,82 @@ def create_plots(daily, downtime, summary):
     plt.savefig(OUTPUT_DIR / "scenario_output.png", dpi=180)
     plt.close()
 
+    by_date = (
+        daily.groupby("date", as_index=False)
+        .agg(
+            liters=("liters_produced", "sum"),
+            monitored=("monitored_time_dec", "sum"),
+            operation=("operation_time_dec", "sum"),
+            pause=("pause_time_dec", "sum"),
+        )
+    )
+    by_date["efficiency"] = by_date["operation"] / by_date["monitored"].replace(0, np.nan)
+
+    plt.figure(figsize=(8.8, 4.8))
+    plt.scatter(by_date["pause"], by_date["efficiency"] * 100, alpha=0.8, color="#9467bd")
+    coeff = np.polyfit(by_date["pause"], by_date["efficiency"] * 100, 1)
+    x_vals = np.linspace(by_date["pause"].min(), by_date["pause"].max(), 100)
+    y_vals = coeff[0] * x_vals + coeff[1]
+    plt.plot(x_vals, y_vals, color="black", linewidth=1.5)
+    plt.title("Pause Time vs Operational Efficiency")
+    plt.xlabel("Pause time per day (hours)")
+    plt.ylabel("Efficiency (%)")
+    plt.tight_layout()
+    plt.savefig(OUTPUT_DIR / "pause_vs_efficiency.png", dpi=180)
+    plt.close()
+
+    downtime_plot = downtime.copy()
+    downtime_plot["category"] = np.select(
+        [
+            downtime_plot["downtime_min"] <= 2.0,
+            (downtime_plot["downtime_min"] > 2.0) & (downtime_plot["downtime_min"] <= 10.0),
+            downtime_plot["downtime_min"] > 10.0,
+        ],
+        ["Micro (<=2 min)", "Minor (2-10 min)", "Major (>10 min)"],
+        default="Other",
+    )
+    cat = (
+        downtime_plot.groupby("category")["downtime_min"]
+        .agg(event_count="count", lost_min="sum")
+        .reindex(["Micro (<=2 min)", "Minor (2-10 min)", "Major (>10 min)"])
+        .reset_index()
+    )
+    cat["lost_share_pct"] = cat["lost_min"] / cat["lost_min"].sum() * 100
+
+    fig, ax1 = plt.subplots(figsize=(8.8, 4.8))
+    bars = ax1.bar(cat["category"], cat["event_count"], color=["#2ca02c", "#ff7f0e", "#d62728"])
+    ax1.set_ylabel("Event count")
+    ax1.set_title("Downtime Pareto by Event Category")
+    ax1.tick_params(axis="x", rotation=15)
+    ax2 = ax1.twinx()
+    ax2.plot(cat["category"], cat["lost_share_pct"], color="black", marker="o", linewidth=2)
+    ax2.set_ylabel("Share of downtime minutes (%)")
+    for bar, count in zip(bars, cat["event_count"]):
+        ax1.text(bar.get_x() + bar.get_width() / 2, count + 10, f"{int(count)}", ha="center", va="bottom", fontsize=9)
+    plt.tight_layout()
+    plt.savefig(OUTPUT_DIR / "downtime_category_pareto.png", dpi=180)
+    plt.close()
+
+    rate_plot = (
+        daily.assign(prod_rate_lph=daily["liters_produced"] / daily["operation_time_dec"].replace(0, np.nan))
+        .groupby("product_type_l")["prod_rate_lph"]
+        .agg(mean="mean", median="median")
+        .reset_index()
+    )
+    labels = [f"{int(x)} L" for x in rate_plot["product_type_l"]]
+    x = np.arange(len(labels))
+    width = 0.35
+    plt.figure(figsize=(7.5, 4.8))
+    plt.bar(x - width / 2, rate_plot["mean"], width=width, label="Mean", color="#1f77b4")
+    plt.bar(x + width / 2, rate_plot["median"], width=width, label="Median", color="#17becf")
+    plt.xticks(x, labels)
+    plt.ylabel("Liters per operating hour")
+    plt.title("Production Rate by Product Size")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(OUTPUT_DIR / "product_rate_comparison.png", dpi=180)
+    plt.close()
+
 
 def build_report(daily, hourly, downtime, production, profiles, summary):
     baseline = summary.loc[summary["scenario"] == "baseline"].iloc[0]
